@@ -1373,5 +1373,63 @@
       });
     });
   </script>
+
+    <script type="module">
+
+import { db } from "./firebase-config.js";
+
+import {
+  ref,
+  get,
+  set,
+  update
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const today = new Date().toISOString().split("T")[0];
+
+const localKey = `visit-${today}`;
+
+async function registerVisit() {
+
+  // evita múltiples visitas el mismo día
+  if(localStorage.getItem(localKey)) {
+    return;
+  }
+
+  const visitRef = ref(db, `visits/${today}`);
+
+  try {
+
+    const snapshot = await get(visitRef);
+
+    if(snapshot.exists()) {
+
+      const currentData = snapshot.val();
+
+      await update(visitRef, {
+        count: currentData.count + 1
+      });
+
+    } else {
+
+      await set(visitRef, {
+        date: today,
+        count: 1
+      });
+    }
+
+    localStorage.setItem(localKey, "true");
+
+    console.log("✅ Visita registrada");
+
+  } catch(error) {
+
+    console.error("❌ Error Firebase:", error);
+  }
+}
+
+registerVisit();
+
+</script>
 </body>
 </html>

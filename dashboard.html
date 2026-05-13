@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard | Creaciones Parra</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+:root{
+  --bg:#060713;
+  --bg2:#0c1024;
+  --card:rgba(255,255,255,.06);
+  --border:rgba(255,255,255,.1);
+  --purple:#7c3cff;
+  --blue:#168bff;
+  --cyan:#20d6ff;
+  --text:#fff;
+  --muted:#b9bfd6;
+}
+
+body{
+  font-family:"Inter",sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(124,60,255,.25), transparent 30%),
+    radial-gradient(circle at top right, rgba(22,139,255,.18), transparent 30%),
+    linear-gradient(180deg,#050614,#090b1d);
+  color:var(--text);
+  min-height:100vh;
+}
+
+.container{
+  width:min(1200px,92%);
+  margin:auto;
+}
+
+header{
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px);
+  background:rgba(5,6,20,.8);
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+
+.navbar{
+  height:80px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.logo-icon{
+  width:48px;
+  height:48px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,var(--purple),var(--blue));
+  font-size:1.4rem;
+  font-weight:900;
+}
+
+.logo strong{
+  display:block;
+  font-size:1.2rem;
+}
+
+.logo span{
+  color:var(--muted);
+  font-size:.75rem;
+}
+
+.dashboard{
+  padding:50px 0;
+}
+
+.dashboard-top{
+  margin-bottom:35px;
+}
+
+.dashboard-top h1{
+  font-size:3rem;
+  margin-bottom:10px;
+  letter-spacing:-2px;
+}
+
+.dashboard-top p{
+  color:var(--muted);
+  line-height:1.7;
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
+  margin-bottom:30px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:28px;
+  backdrop-filter:blur(14px);
+  position:relative;
+  overflow:hidden;
+}
+
+.card::before{
+  content:"";
+  position:absolute;
+  width:180px;
+  height:180px;
+  border-radius:50%;
+  background:rgba(124,60,255,.15);
+  top:-80px;
+  right:-80px;
+}
+
+.card small{
+  color:var(--muted);
+  font-size:.9rem;
+}
+
+.card h2{
+  font-size:3rem;
+  margin-top:12px;
+  font-weight:900;
+}
+
+.card.green::before{
+  background:rgba(34,197,94,.15);
+}
+
+.card.blue::before{
+  background:rgba(22,139,255,.15);
+}
+
+.chart-container{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:28px;
+  padding:30px;
+}
+
+.chart-container h2{
+  margin-bottom:25px;
+  font-size:1.5rem;
+}
+
+canvas{
+  width:100% !important;
+  height:420px !important;
+}
+
+@media(max-width:900px){
+
+  .cards{
+    grid-template-columns:1fr;
+  }
+
+  .dashboard-top h1{
+    font-size:2.2rem;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="container navbar">
+
+    <div class="logo">
+      <div class="logo-icon">&lt;/&gt;</div>
+
+      <div>
+        <strong>Creaciones Parra</strong>
+        <span>Dashboard</span>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<section class="dashboard">
+
+  <div class="container">
+
+    <div class="dashboard-top">
+      <h1>Dashboard de Visitas</h1>
+      <p>Monitorea las visitas de tu página web en tiempo real.</p>
+    </div>
+
+    <div class="cards">
+
+      <div class="card">
+        <small>Total de visitas</small>
+        <h2 id="totalVisits">12,580</h2>
+      </div>
+
+      <div class="card blue">
+        <small>Visitas hoy</small>
+        <h2 id="todayVisits">328</h2>
+      </div>
+
+      <div class="card green">
+        <small>Promedio diario</small>
+        <h2 id="averageVisits">419</h2>
+      </div>
+
+    </div>
+
+    <div class="chart-container">
+      <h2>Visitas de los últimos 7 días</h2>
+
+      <canvas id="visitsChart"></canvas>
+    </div>
+
+  </div>
+
+</section>
+
+<script>
+
+const ctx = document.getElementById('visitsChart');
+
+new Chart(ctx, {
+    type: 'bar',
+
+    data: {
+        labels: [
+          'Lunes',
+          'Martes',
+          'Miércoles',
+          'Jueves',
+          'Viernes',
+          'Sábado',
+          'Domingo'
+        ],
+
+        datasets: [{
+            label: 'Visitas',
+            data: [320, 450, 380, 510, 620, 700, 590],
+
+            backgroundColor: [
+              '#7c3cff',
+              '#6d52ff',
+              '#5c65ff',
+              '#4d78ff',
+              '#3b8cff',
+              '#2ba0ff',
+              '#20d6ff'
+            ],
+
+            borderRadius: 12,
+            borderSkipped: false
+        }]
+    },
+
+    options: {
+
+        responsive: true,
+
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#ffffff'
+                }
+            }
+        },
+
+        scales: {
+
+            x: {
+                ticks: {
+                    color: '#b9bfd6'
+                },
+
+                grid: {
+                    color: 'rgba(255,255,255,.05)'
+                }
+            },
+
+            y: {
+                beginAtZero: true,
+
+                ticks: {
+                    color: '#b9bfd6'
+                },
+
+                grid: {
+                    color: 'rgba(255,255,255,.05)'
+                }
+            }
+        }
+    }
+});
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script type="module">
+
+import { db } from "./firebase-config.js";
+
+import {
+  ref,
+ get
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+async function loadDashboard() {
+
+  const visitsRef = ref(db, "visits");
+
+  try {
+
+    const snapshot = await get(visitsRef);
+
+    if(!snapshot.exists()) {
+      console.log("No hay datos");
+      return;
+    }
+
+    const data = snapshot.val();
+
+    const labels = [];
+    const values = [];
+
+    let totalVisits = 0;
+    let todayVisits = 0;
+
+    const today = new Date().toISOString().split("T")[0];
+
+    Object.keys(data).forEach(date => {
+
+      labels.push(date);
+
+      values.push(data[date].count);
+
+      totalVisits += data[date].count;
+
+      if(date === today) {
+        todayVisits = data[date].count;
+      }
+    });
+
+    document.getElementById("totalVisits").textContent = totalVisits;
+
+    document.getElementById("todayVisits").textContent = todayVisits;
+
+    document.getElementById("averageVisits").textContent =
+      Math.round(totalVisits / labels.length);
+
+    createChart(labels, values);
+
+  } catch(error) {
+
+    console.error(error);
+  }
+}
+
+function createChart(labels, values) {
+
+  const ctx = document.getElementById("visitsChart");
+
+  new Chart(ctx, {
+
+    type: "bar",
+
+    data: {
+
+      labels,
+
+      datasets: [{
+
+        label: "Visitas",
+
+        data: values,
+
+        backgroundColor: [
+          "#7c3cff",
+          "#6d52ff",
+          "#5c65ff",
+          "#4d78ff",
+          "#3b8cff",
+          "#20d6ff",
+          "#20ffc8"
+        ],
+
+        borderRadius: 10
+      }]
+    },
+
+    options: {
+
+      responsive: true,
+
+      plugins: {
+
+        legend: {
+
+          labels: {
+            color: "#ffffff"
+          }
+        }
+      },
+
+      scales: {
+
+        x: {
+
+          ticks: {
+            color: "#b9bfd6"
+          },
+
+          grid: {
+            color: "rgba(255,255,255,.05)"
+          }
+        },
+
+        y: {
+
+          beginAtZero: true,
+
+          ticks: {
+            color: "#b9bfd6"
+          },
+
+          grid: {
+            color: "rgba(255,255,255,.05)"
+          }
+        }
+      }
+    }
+  });
+}
+
+loadDashboard();
+
+</script>
+
+
+</body>
+</html>
